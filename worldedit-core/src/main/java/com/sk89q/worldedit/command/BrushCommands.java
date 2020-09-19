@@ -19,7 +19,6 @@
 
 package com.sk89q.worldedit.command;
 
-import com.google.common.io.MoreFiles;
 import com.sk89q.worldedit.LocalConfiguration;
 import com.sk89q.worldedit.LocalSession;
 import com.sk89q.worldedit.WorldEdit;
@@ -64,12 +63,11 @@ import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.session.request.RequestExtent;
 import com.sk89q.worldedit.util.HandSide;
 import com.sk89q.worldedit.util.TreeGenerator;
+import com.sk89q.worldedit.util.asset.AssetLoadTask;
 import com.sk89q.worldedit.util.asset.AssetLoader;
 import com.sk89q.worldedit.util.asset.holder.ImageHeightmap;
-import com.sk89q.worldedit.util.formatting.text.Component;
 import com.sk89q.worldedit.util.formatting.text.TextComponent;
 import com.sk89q.worldedit.util.formatting.text.TranslatableComponent;
-import com.sk89q.worldedit.util.formatting.text.format.TextColor;
 import com.sk89q.worldedit.world.biome.BiomeType;
 import com.sk89q.worldedit.world.block.BlockTypes;
 import org.enginehub.piston.annotation.Command;
@@ -78,10 +76,7 @@ import org.enginehub.piston.annotation.param.Arg;
 import org.enginehub.piston.annotation.param.ArgFlag;
 import org.enginehub.piston.annotation.param.Switch;
 
-import java.nio.file.Path;
-import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.Callable;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -361,7 +356,7 @@ public class BrushCommands {
             worldEdit.checkMaxBrushRadius(radius);
             BrushTool tool = session.getBrushTool(player.getItemInHand(HandSide.MAIN_HAND).getType());
 
-            ImageHeightmapLoadTask task = new ImageHeightmapLoadTask(loader.get(), imageName);
+            AssetLoadTask<ImageHeightmap> task = new AssetLoadTask<>(loader.get(), imageName);
             AsyncCommandBuilder.wrap(task, player)
                 .registerWithSupervisor(worldEdit.getSupervisor(), "Loading asset " + imageName)
                 .setDelayMessage(TranslatableComponent.of("worldedit.asset.load.loading"))
@@ -373,23 +368,7 @@ public class BrushCommands {
                 .onFailure(TranslatableComponent.of("worldedit.asset.load.failed"), worldEdit.getPlatformManager().getPlatformCommandManager().getExceptionConverter())
                 .buildAndExec(worldEdit.getExecutorService());
         } else {
-            AsyncCommandBuilder.wrap((Callable<Component>) () -> {
-                List<Path> imageNames = worldEdit.getAssetLoaders().getFilesForAsset(ImageHeightmap.class);
-                TextComponent.Builder builder = TextComponent.builder();
-                int i = 0;
-                for (Path path : imageNames) {
-                    builder.append(TextComponent.of(MoreFiles.getNameWithoutExtension(path), i % 2 == 0 ? TextColor.GRAY : TextColor.WHITE));
-                    if (i <= imageNames.size()) {
-                        builder.append(TextComponent.of(", "));
-                    }
-                    i++;
-                }
-                return TranslatableComponent.of("worldedit.brush.image.unknown", TextComponent.of(imageName), builder.build());
-            }, player)
-                .registerWithSupervisor(worldEdit.getSupervisor(), "Image brush list.")
-                .onSuccess((Component) null, player::print)
-                .onFailure((Component) null, worldEdit.getPlatformManager().getPlatformCommandManager().getExceptionConverter())
-                .buildAndExec(worldEdit.getExecutorService());
+            player.printError(TranslatableComponent.of("worldedit.brush.image.unknown", TextComponent.of(imageName)));
         }
     }
 
@@ -532,21 +511,5 @@ public class BrushCommands {
         tool.setBrush(new OperationFactoryBrush(factory, shape, session), permission);
 
         player.printInfo(TranslatableComponent.of("worldedit.brush.operation.equip", TextComponent.of(factory.toString())));
-    }
-
-    private static class ImageHeightmapLoadTask implements Callable<ImageHeightmap> {
-
-        private final String imageName;
-        private final AssetLoader<ImageHeightmap> loader;
-
-        public ImageHeightmapLoadTask(AssetLoader<ImageHeightmap> loader, String imageName) {
-            this.loader = loader;
-            this.imageName = imageName;
-        }
-
-        @Override
-        public ImageHeightmap call() throws Exception {
-            return this.loader.getAsset(this.imageName);
-        }
     }
 }

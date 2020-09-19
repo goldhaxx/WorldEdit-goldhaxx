@@ -19,12 +19,22 @@
 
 package com.sk89q.worldedit.util.asset.holder;
 
+import com.google.common.annotations.Beta;
+
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 /**
  * Represents an image that acts as a heightmap.
+ *
+ * <p>
+ *     Height is determined by how light each pixel of the image is,
+ *     from black (0) to white (1).
+ *
+ *     Lightness is determined by an average of the 3 color channels.
+ * </p>
  */
+@Beta
 public class ImageHeightmap {
 
     private final BufferedImage image;

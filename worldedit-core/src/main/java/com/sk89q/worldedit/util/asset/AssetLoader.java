@@ -19,6 +19,7 @@
 
 package com.sk89q.worldedit.util.asset;
 
+import com.google.common.annotations.Beta;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.sk89q.worldedit.WorldEdit;
@@ -26,12 +27,12 @@ import com.sk89q.worldedit.util.io.file.FilenameException;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
+@Beta
 public abstract class AssetLoader<T> {
 
     private final Cache<String, T> assets = CacheBuilder.newBuilder()
@@ -106,15 +107,6 @@ public abstract class AssetLoader<T> {
      */
     @Nullable
     protected abstract T loadAssetFromPath(Path path) throws Exception;
-
-    /**
-     * Returns an immutable set of asset keys.
-     *
-     * @return immutable set of asset keys
-     */
-    public Set<String> getCachedAssetKeys() {
-        return Collections.unmodifiableSet(assets.asMap().keySet());
-    }
 
     /**
      * The extensions that this asset loader supports.

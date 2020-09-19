@@ -19,6 +19,7 @@
 
 package com.sk89q.worldedit.util.asset;
 
+import com.google.common.annotations.Beta;
 import com.google.common.collect.ImmutableSet;
 import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.util.asset.holder.ImageHeightmap;
@@ -32,6 +33,7 @@ import javax.imageio.ImageIO;
 /**
  * Loads and caches image files from WorldEdit's assets directory.
  */
+@Beta
 public class ImageHeightmapLoader extends AssetLoader<ImageHeightmap> {
 
     public ImageHeightmapLoader(WorldEdit worldEdit, Path assetDir) {

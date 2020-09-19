@@ -19,6 +19,7 @@
 
 package com.sk89q.worldedit.util.asset;
 
+import com.google.common.annotations.Beta;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,12 +43,13 @@ import java.util.Set;
 /**
  * Class to store the various asset loaders.
  */
+@Beta
 public class AssetLoaders {
 
     protected final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final List<AssetLoader<?>> assetLoaders = Lists.newArrayList();
-    private final Table<Class<?>, String, AssetLoader<?>> assetLoaderMap = HashBasedTable.create();
+    private final Table<Class<?>, String, AssetLoader<?>> assetLoaderRegistration = HashBasedTable.create();
     private final WorldEdit worldEdit;
 
     private Path assetsDir;
@@ -75,23 +78,23 @@ public class AssetLoaders {
     public <T> void registerAssetLoader(AssetLoader<T> loader, Class<T> assetClass) {
         assetLoaders.add(loader);
         for (String extension : loader.getAllowedExtensions()) {
-            if (assetLoaderMap.contains(assetClass, extension)) {
+            if (assetLoaderRegistration.contains(assetClass, extension)) {
                 logger.warn(String.format(
                     "Tried to register asset loader '%s' with extension '%s' and asset class '%s', but it is already registered to '%s'",
                     loader.getClass().getName(),
                     extension,
                     assetClass.getName(),
-                    assetLoaderMap.get(assetClass, extension).getClass().getName()
+                    assetLoaderRegistration.get(assetClass, extension).getClass().getName()
                 ));
                 continue;
             }
 
-            assetLoaderMap.put(assetClass, extension, loader);
+            assetLoaderRegistration.put(assetClass, extension, loader);
         }
     }
 
     /**
-     * Gets the Asset Loader of the given type.
+     * Gets the Asset Loader for the given file of the given type.
      *
      * @param assetClass The class to get a loader for
      * @param filename The filename to attempt to load
@@ -100,18 +103,18 @@ public class AssetLoaders {
      */
     @SuppressWarnings("unchecked")
     public <T> Optional<AssetLoader<T>> getAssetLoader(Class<T> assetClass, String filename) {
-        if (!assetLoaderMap.containsRow(assetClass)) {
+        if (!assetLoaderRegistration.containsRow(assetClass)) {
             return Optional.empty();
         }
 
         Path directPath = this.assetsDir.resolve(filename);
 
         String ext = MoreFiles.getFileExtension(directPath);
-        if (Files.exists(directPath) && assetLoaderMap.contains(assetClass, ext)) {
-            return Optional.ofNullable((AssetLoader<T>) assetLoaderMap.get(assetClass, ext));
+        if (Files.exists(directPath) && assetLoaderRegistration.contains(assetClass, ext)) {
+            return Optional.ofNullable((AssetLoader<T>) assetLoaderRegistration.get(assetClass, ext));
         }
 
-        for (Map.Entry<String, AssetLoader<?>> entry : assetLoaderMap.row(assetClass).entrySet()) {
+        for (Map.Entry<String, AssetLoader<?>> entry : assetLoaderRegistration.row(assetClass).entrySet()) {
             Path extensionPath = this.assetsDir.resolve(filename + "." + entry.getKey());
             if (Files.exists(extensionPath)) {
                 return Optional.ofNullable((AssetLoader<T>) entry.getValue());
@@ -122,13 +125,30 @@ public class AssetLoaders {
     }
 
     /**
+     * Get the Asset Loaders for the given type.
+     *
+     * @param assetClass The class to get the loaders of
+     * @return The list of asset loaders
+     *
+     * @param <T> The asset type
+     */
+    @SuppressWarnings("unchecked")
+    public <T> List<AssetLoader<T>> getAssetLoaders(Class<T> assetClass) {
+        if (!assetLoaderRegistration.containsRow(assetClass)) {
+            return ImmutableList.of();
+        }
+
+        return ImmutableList.copyOf((Collection<AssetLoader<T>>) (Collection<?>) assetLoaderRegistration.values());
+    }
+
+    /**
      * Gets an immutable list of all files that match a certain asset type.
      *
      * @param assetClass The asset class
      * @return The list of files
      */
     public List<Path> getFilesForAsset(Class<?> assetClass) {
-        Set<String> extensions = this.assetLoaderMap.row(assetClass).keySet();
+        Set<String> extensions = this.assetLoaderRegistration.row(assetClass).keySet();
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(this.assetsDir, entry -> extensions.contains(MoreFiles.getFileExtension(entry)))) {
             return ImmutableList.copyOf(stream);
