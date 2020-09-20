@@ -338,18 +338,18 @@ public class BrushCommands {
     )
     @CommandPermissions("worldedit.brush.image")
     void imageBrush(Player player, LocalSession session,
-                           @Arg(desc = "The name of the image")
-                               String imageName,
-                           @Arg(desc = "The size of the brush", def = "5")
-                               double radius,
-                           @Arg(desc = "The intensity of the brush", def = "5")
-                               double intensity,
-                           @Switch(name = 'e', desc = "Erase blocks instead of filling them")
-                               boolean erase,
-                           @Switch(name = 'f', desc = "Don't change blocks above the selected height")
-                               boolean flatten,
-                           @Switch(name = 'r', desc = "Randomizes the brush's height slightly.")
-                               boolean randomize) throws WorldEditException {
+                    @Arg(desc = "The name of the image")
+                        String imageName,
+                    @Arg(desc = "The size of the brush", def = "5")
+                        double radius,
+                    @Arg(desc = "The intensity of the brush", def = "5")
+                        double intensity,
+                    @Switch(name = 'e', desc = "Erase blocks instead of filling them")
+                        boolean erase,
+                    @Switch(name = 'f', desc = "Don't change blocks above the selected height")
+                        boolean flatten,
+                    @Switch(name = 'r', desc = "Randomizes the brush's height slightly.")
+                        boolean randomize) throws WorldEditException {
         Optional<AssetLoader<ImageHeightmap>> loader = worldEdit.getAssetLoaders().getAssetLoader(ImageHeightmap.class, imageName);
 
         if (loader.isPresent()) {
