@@ -24,7 +24,7 @@ import com.sk89q.worldedit.MaxChangedBlocksException;
 import com.sk89q.worldedit.function.pattern.Pattern;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.util.asset.holder.ImageHeightmap;
-import com.sk89q.worldedit.world.block.BaseBlock;
+import com.sk89q.worldedit.world.block.BlockState;
 import com.sk89q.worldedit.world.block.BlockTypes;
 
 import java.util.concurrent.ThreadLocalRandom;
@@ -47,7 +47,6 @@ public class ImageHeightmapBrush implements Brush {
 
     @Override
     public void build(EditSession editSession, BlockVector3 position, Pattern pattern, double doubleSize) throws MaxChangedBlocksException {
-        // Resize the image
         int size = (int) Math.ceil(doubleSize);
 
         double random = randomize ? ThreadLocalRandom.current().nextDouble() : 0;
@@ -67,16 +66,15 @@ public class ImageHeightmapBrush implements Brush {
                     height += 1;
                 }
 
-                BaseBlock baseBlock = erase ? null : editSession.getBlock(block).toBaseBlock();
+                BlockState baseBlock = erase ? null : editSession.getBlock(block);
                 for (int y = 0; y < height; y++) {
                     if (erase) {
                         // Remove blocks if using the erase flag
-                        editSession.setBlock(block.withY(block.getY() - y), BlockTypes.AIR.getDefaultState());
-                    } else if ((!flatten || block.getY() - y > position.getY()) && block.getY() - y >= 0) {
-                        // Only go up to the origin's level if flat mode is enabled
-                        if (!flatten || block.getY() + y <= position.getY()) {
-                            editSession.setBlock(block.withY(block.getY() + y), baseBlock);
+                        if (!flatten || block.getY() - y > position.getY()) {
+                            editSession.setBlock(block.withY(block.getY() - y), BlockTypes.AIR.getDefaultState());
                         }
+                    } else if (!flatten || block.getY() + y <= position.getY()) {
+                        editSession.setBlock(block.withY(block.getY() + y), baseBlock);
                     }
                 }
             }

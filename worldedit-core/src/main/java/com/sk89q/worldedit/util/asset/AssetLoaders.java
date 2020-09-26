@@ -98,7 +98,6 @@ public class AssetLoaders {
      *
      * @param assetClass The class to get a loader for
      * @param filename The filename to attempt to load
-     *
      * @param <T> The returned asset type
      */
     @SuppressWarnings("unchecked")
